@@ -3,3 +3,21 @@
 t = 0:1/Fs:length(y)/Fs; % time length and increments
 t = t(1:end-1); % matching time and sample vector lengths
 plot(t,y);
+N = .0205; % multiplier for Fs
+M = .008; % 
+N = N * Fs; % Convert from seconds to samples
+M = M * Fs; % Convert from seconds to samples
+signal_length_L = length(y);
+N = round(N); % N = 256 samples
+disp(N);
+M = round(M); % M = 100
+disp(M); 
+num_frames = ceil(single(abs(signal_length_L - N)) / M);  % Make sure that we have at least 1 frame
+
+pad_signal_length = num_frames * (M + N);
+a = (pad_signal_length - signal_length_L); 
+z = zeros(a,1);
+pad_signal = [y' z']; % Pad Signal to make sure that all frames have equal number of samples without truncating any samples from the original signal
+
+%indices = numpy.tile(numpy.arange(0, frame_length), (num_frames, 1)) + numpy.tile(numpy.arange(0, num_frames * frame_step, frame_step), (frame_length, 1)).T
+%frames = pad_signal[indices.astype(numpy.int32, copy=False)]
