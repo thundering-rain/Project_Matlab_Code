@@ -1,0 +1,109 @@
+[y,Fs] = audioread('s1.wav'); % read .wav audio file
+t = 0:1/Fs:length(y)/Fs; % time length and increments
+t = t(1:end-1); % matching time and sample vector lengths
+N = .025; % multiplier for Fs
+M = .01; % 
+N = N * Fs; % Convert from seconds to samples
+M = M * Fs; % Convert from seconds to samples
+signal_length_L = length(y);
+N = round(N); % N = 320 samples, frane_length
+disp(N);
+M = round(M); % M = 125, frame_step
+disp(M); 
+
+[s,f,t] = stft(y,Fs,Window=hamming(N-1),OverlapLength=N-M,FFTLength=N); % break signal into # of frames with N length overlapping by N-M
+sdb = mag2db(abs(s)); % find power of s
+subplot(3,1,1);
+imagesc(t,f/1000,sdb); % spectrogram of s, prior to mel frequency wrapping
+ax = gca;
+set(gca,'YDir', 'normal');
+view(2);
+colorbar
+ylim([0 6]);
+
+
+
+
+
+
+m = melfb(32, N, Fs); % mel-spaced filterbank, compare with theoretical
+N2 = 1 + floor(N/2); % 1/2 of the number of samples per frame
+z = m * abs(f(1:N2)).^2;
+
+mel_fbs = zeros(32,size(s,2)); % initialize matrix for mel-frequency wrapped fft values
+for i = (1:size(s,2))
+z = m * abs(s(N2:N,i)).^2; 
+mel_fbs(1:32,i) = z(1:32,1);
+end
+sdb = mag2db(abs(mel_fbs)); % power of mel-frequency wrapped fft values (mel_spectrum)
+subplot(3,1,2)
+imagesc(t,[0:max(f)/20:max(f)-max(f)/20]/1000,sdb); % spectrogram after mel-frequency wrapping
+ax = gca;
+set(gca,'YDir', 'normal');
+view(2);
+colorbar
+
+
+
+
+
+subplot(3,1,3)
+melSpectrogram(y,Fs); % matlab mel spectrogram for comparison, should match
+%one above
+
+mfcc1 = zeros(31,size(mel_fbs,2)); % initialize matric for mfcc
+for j = (1:size(mel_fbs,2))
+z = dct(mel_fbs(2:size(mel_fbs,1),j)); 
+mfcc1(1:31,j) = z(1:31,1);
+end
+
+[idx1,C1] = kmeans(mfcc1(:,5),1);
+[idx2,C2] = kmeans(mfcc2(:,5),1);
+
+plot(mfcc1(:,5),mfcc2(:,5),'.');
+
+
+
+
+
+function m = melfb(p, n, fs)
+% MELFB Determine matrix for a mel-spaced filterbank
+%
+% Inputs: p number of filters in filterbank
+% n length of fft
+% fs sample rate in Hz
+%
+% Outputs: x a (sparse) matrix containing the filterbank amplitudes
+% size(x) = [p, 1+floor(n/2)]
+%
+% Usage: For example, to compute the mel-scale spectrum of a
+% colum-vector signal s, with length n and sample rate fs:
+%
+% f = fft(s);
+% m = melfb(p, n, fs);
+% n2 = 1 + floor(n/2);
+% z = m * abs(f(1:n2)).^2;
+%
+% z would contain p samples of the desired mel-scale spectrum
+%
+% To plot filterbanks e.g.:
+%
+% plot(linspace(0, (12500/2), 129), melfb(20, 256, 12500)'),
+% title('Mel-spaced filterbank'), xlabel('Frequency (Hz)');
+f0 = 700 / fs;
+fn2 = floor(n/2);
+lr = log(1 + 0.5/f0) / (p+1);
+% convert to fft bin numbers with 0 for DC term
+bl = n * (f0 * (exp([0 1 p p+1] * lr) - 1));
+b1 = floor(bl(1)) + 1;
+b2 = ceil(bl(2));
+b3 = floor(bl(3));
+b4 = min(fn2, ceil(bl(4))) - 1;
+pf = log(1 + (b1:b4)/n/f0) / lr;
+fp = floor(pf);
+pm = pf - fp;
+r = [fp(b2:b4) 1+fp(1:b3)];
+c = [b2:b4 1:b3] + 1;
+v = 2 * [1-pm(b2:b4) pm(1:b3)];
+m = sparse(r, c, v, p, 1+fn2);
+end
