@@ -11,7 +11,7 @@ In order to properly use this program please follow these instructions:
 line 3, which will have the code "file = sprintf('Zero_train%d.wav', p);", and replace the text "Zero" with "Twelve"
 
 5) next navigate to line 71, which will have the code: "file1 = sprintf('Zero_test%d.wav', ii );" and again replace the text: "Zero"
-with "Twelve"
+with "Twelve", now run the program. The resuslts will be displayed in the command window.
 
 6) if you wish to test the accuracy of vq voice recognition for the Zero files simply run the program
 
