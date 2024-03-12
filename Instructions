@@ -1,0 +1,11 @@
+This program, which is designed with the intention of functioning as a vq speaker recognition program is intended to be used in MATLAB
+In order to properly use this program please follow these instructions:
+
+1) Download all Twelve and Zero training and test wav files included in this respository
+
+2) upload said wav files to your file directory in MATLAB by dragging and dropping
+
+3) upload the Malab_Code program to an appropriately named file in MATLAB
+
+4) If you wish to test the accuracy of vq voice recognition for the twelve files, navigate to
+line 3, which will either have the code "file = sprintf('Zero_train%d.wav', p);"
