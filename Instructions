@@ -8,20 +8,9 @@ In order to properly use this program please follow these instructions:
 3) upload the Matlab_Code program to an appropriately named file in MATLAB
 
 4) If you wish to test the accuracy of vq voice recognition for the twelve files, navigate to
-line 3, which will have the code "file = sprintf('Zero_train%d.wav', p);", and replace the text "Zero" with "Twelve"
+line 2, which will have the code "file = sprintf('Zero_train%d.wav', p);", and replace the text "Zero" with "Twelve"
 
-5) next navigate to line 71, which will have the code: "file1 = sprintf('Zero_test%d.wav', ii );" and again replace the text: "Zero"
+5) next navigate to line 12, which will have the code: "file1 = sprintf('Zero_test%d.wav', ii );" and again replace the text: "Zero"
 with "Twelve", now run the program. The resuslts will be displayed in the command window.
 
 6) if you wish to test the accuracy of vq voice recognition for the Zero files simply run the program
-
-7) this program is, as it stands, optimized for use with the accompanying wav files, but if you wish to use alternate wav files:
-navigate to line 2, which has the code: "for p = 1:18 " and change the "18" to the number of training and testing files you plan on using
-
-8) now navigate to line 70, which has the code: "for ii =1:18" and again change the "18" to the number of training and testing vectors you 
-plan on using
-
-9) navigate to line 7, which has the code: "y = resample(y,2,17);" and, either increase, decrease or leave the sampling freuency,
-making sure that in the next line, your Fs matches your resampled data
-
-10) repeat step 8 for lines 73 and 74
