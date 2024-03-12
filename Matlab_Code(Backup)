@@ -1,8 +1,15 @@
-[y,Fs] = audioread('s1.wav'); % read .wav audio file
+book = cell(1);
+for p = 1:18                     % generate codebooks for speakers
+    file = sprintf('Zero_train%d.wav', p);           
+    disp(file);   
+
+[y,Fs] = audioread(file); % read .wav audio file
+y = resample(y,2,17);
+Fs = Fs * 2 / 17;
 t = 0:1/Fs:length(y)/Fs; % time length and increments
 t = t(1:end-1); % matching time and sample vector lengths
-N = .025; % multiplier for Fs
-M = .01; % 
+N = .032; % multiplier for Fs
+M = .0125; % 
 N = N * Fs; % Convert from seconds to samples
 M = M * Fs; % Convert from seconds to samples
 signal_length_L = length(y);
@@ -11,56 +18,152 @@ disp(N);
 M = round(M); % M = 125, frame_step
 disp(M); 
 
-[s,f,t] = stft(y,Fs,Window=hamming(N-1),OverlapLength=N-M,FFTLength=N); % break signal into # of frames with N length overlapping by N-M
-sdb = mag2db(abs(s)); % find power of s
-subplot(3,1,1);
-imagesc(t,f/1000,sdb); % spectrogram of s, prior to mel frequency wrapping
-ax = gca;
-set(gca,'YDir', 'normal');
-view(2);
-colorbar
-ylim([0 6]);
+[s,f,t] = stft(y,Fs,Window=hanning(N-1),OverlapLength=N-M,FFTLength=N); % break signal into # of frames with N length overlapping by N-M
+%sdb = mag2db(abs(s)); % find power of s
+%subplot(3,1,1);
+%imagesc(t,f/1000,sdb); % spectrogram of s, prior to mel frequency wrapping
+%ax = gca;
+%set(gca,'YDir', 'normal');
+%view(2);
+%colorbar
+%ylim([0 6]);
 
 
 
 
 
 
-m = melfb(32, N, Fs); % mel-spaced filterbank, compare with theoretical
+m = melfb(50, N, Fs); % mel-spaced filterbank, compare with theoretical
 N2 = 1 + floor(N/2); % 1/2 of the number of samples per frame
 z = m * abs(f(1:N2)).^2;
 
-mel_fbs = zeros(32,size(s,2)); % initialize matrix for mel-frequency wrapped fft values
+mel_fbs = zeros(50,size(s,2)); % initialize matrix for mel-frequency wrapped fft values
 for i = (1:size(s,2))
 z = m * abs(s(N2:N,i)).^2; 
-mel_fbs(1:32,i) = z(1:32,1);
+mel_fbs(1:50,i) = z(1:50,1);
 end
 sdb = mag2db(abs(mel_fbs)); % power of mel-frequency wrapped fft values (mel_spectrum)
-subplot(3,1,2)
-imagesc(t,[0:max(f)/20:max(f)-max(f)/20]/1000,sdb); % spectrogram after mel-frequency wrapping
-ax = gca;
-set(gca,'YDir', 'normal');
-view(2);
-colorbar
+%subplot(3,1,2)
+%imagesc(t,[0:max(f)/20:max(f)-max(f)/20]/1000,sdb); % spectrogram after mel-frequency wrapping
+%ax = gca;
+%set(gca,'YDir', 'normal');
+%view(2);
+%colorbar
 
 
 
 
 
-subplot(3,1,3)
-melSpectrogram(y,Fs); % matlab mel spectrogram for comparison, should match
+%subplot(3,1,3)
+%melSpectrogram(y,Fs,'NumBands',50); % matlab mel spectrogram for comparison, should match
 %one above
 
-mfcc1 = zeros(31,size(mel_fbs,2)); % initialize matric for mfcc
-for j = (1:size(mel_fbs,2))
-z = dct(mel_fbs(2:size(mel_fbs,1),j)); 
-mfcc1(1:31,j) = z(1:31,1);
+
+mfcc = zeros(50,size(sdb,2)); % initialize matric for mfcc
+for j = (1:size(sdb,2))
+z = dct(sdb(1:size(sdb,1),j))/10; 
+mfcc(1:50,j) = z(1:50,1);
+end
+book{p} = cbook(mfcc,32);
 end
 
-[idx1,C1] = kmeans(mfcc1(:,5),1);
-[idx2,C2] = kmeans(mfcc2(:,5),1);
+for ii =1:18
+  file1 = sprintf('Zero_test%d.wav', ii );
+[ys,Fss] = audioread(file1); % read .wav audio file
+ys = resample(ys,2,17);
+Fss = Fss * 2/ 17;
+ts = 0:1/Fs:length(ys)/Fss; % time length and increments
+ts = ts(1:end-1); % matching time and sample vector lengths
+Ns = .032; % multiplier for Fs
+Ms = .0125; % 
+Ns = Ns * Fss; % Convert from seconds to samples
+Ms = Ms * Fss; % Convert from seconds to samples
+signal_length_Ls = length(ys);
+Ns = round(Ns); % N = 320 samples, frame_length
+disp(Ns);
+Ms = round(Ms); % M = 125, frame_step
+disp(Ms); 
 
-plot(mfcc1(:,5),mfcc2(:,5),'.');
+[ss,fs,ts] = stft(ys,Fss,Window=hanning(Ns-1),OverlapLength=Ns-Ms,FFTLength=Ns); % break signal into # of frames with N length overlapping by N-M
+%sdb = mag2db(abs(s)); % find power of s
+%subplot(3,1,1);
+%imagesc(t,f/1000,sdb); % spectrogram of s, prior to mel frequency wrapping
+%ax = gca;
+%set(gca,'YDir', 'normal');
+%view(2);
+%colorbar
+%ylim([0 6]);
+
+
+
+
+
+
+ms = melfb(50, Ns, Fss); % mel-spaced filterbank, compare with theoretical
+N2s = 1 + floor(Ns/2); % 1/2 of the number of samples per frame
+zs = ms * abs(fs(1:N2s)).^2;
+
+mel_fbss = zeros(50,size(ss,2)); % initialize matrix for mel-frequency wrapped fft values
+for is = (1:size(ss,2))
+zs = ms * abs(ss(N2s:Ns,is)).^2; 
+mel_fbss(1:50,is) = zs(1:50,1);
+end
+sdbs = mag2db(abs(mel_fbss)); % power of mel-frequency wrapped fft values (mel_spectrum)
+%subplot(3,1,2)
+%imagesc(t,[0:max(f)/20:max(f)-max(f)/20]/1000,sdb); % spectrogram after mel-frequency wrapping
+%ax = gca;
+%set(gca,'YDir', 'normal');
+%view(2);
+%colorbar
+
+
+
+
+
+%subplot(3,1,3)
+%melSpectrogram(y,Fs); % matlab mel spectrogram for comparison, should match
+%one above
+
+
+mfccs = zeros(50,size(sdbs,2)); % initialize matric for mfcc
+for js = (1:size(sdbs,2))
+zs = dct(sdbs(1:size(sdbs,1),js))/10; 
+mfccs(1:50,js) = zs(1:50,1);
+end
+   
+sp = 0; % variable for speaker
+dist = zeros(1,18); % Average Distortion Vector
+for r = 1:length(book)      
+d = disteu(mfccs, book{r}); % compute distortion of wav file mfccs with each speakers codewords 
+dist(r) = sum(min(d,[],2)) / size(d,1); % find av. distortion 
+end      
+m1 = min(dist); % minimum average distortion of all speakers
+for iii = 1:18
+if dist(iii) == m1
+sp = iii;
+break;
+else 
+sp = 0;
+end
+end
+msg = sprintf('Test %d corresponds to train %d', ii, sp);
+disp(msg);
+end
+
+
+
+%scatter(mfcc1(8,:),mfcc1(12,:),'b','o');
+%hold on
+%scatter(mfcc2(8,:),mfcc2(12,:),'r','x');
+%hold on 
+
+
+
+
+
+
+
+
 
 
 
@@ -106,4 +209,66 @@ r = [fp(b2:b4) 1+fp(1:b3)];
 c = [b2:b4 1:b3] + 1;
 v = 2 * [1-pm(b2:b4) pm(1:b3)];
 m = sparse(r, c, v, p, 1+fn2);
+end
+
+function d = disteu(x, y)
+% DISTEU Pairwise Euclidean distances between columns of two matrices
+%
+% Input:
+% x, y: Two matrices whose each column is an a vector data.
+%
+% Output:
+% d: Element d(i,j) will be the Euclidean distance between two
+% column vectors X(:,i) and Y(:,j)
+%
+% Note:
+% The Euclidean distance D between two vectors X and Y is:
+% D = sum((x-y).^2).^0.5
+[M, N] = size(x);
+[M2, P] = size(y);
+if (M ~= M2)
+error('Matrix dimensions do not match.')
+end
+d = zeros(N, P);
+if (N < P)
+copies = zeros(1,P);
+for n = 1:N
+d(n,:) = sum((x(:, n+copies) - y) .^2, 1);
+end
+else
+copies = zeros(1,N);
+for p = 1:P
+d(:,p) = sum((x - y(:, p+copies)) .^2, 1)';
+end
+end
+d = d.^0.5;
+end
+
+%LBG algorithm
+function cent = cbook(mf,cnum)
+
+eps   = .01;
+cent   = mean(mf, 2);%column vector containing the mean of each row
+D_min = 10000;
+
+for l = 1:log2(cnum) % total loops will yield desired codewords
+cent = [cent*(1+eps), cent*(1-eps)];
+while (1 == 1)
+nei = disteu(mf, cent); % find dist between centroids and training vectors
+[m,ind] = min(nei, [], 2);%column vector containing the minimum values of distance between codewords and training vectors
+D = 0; % initialize distortion
+for c = 1:2^l
+cent(:, c) = mean(mf(:, ind == c), 2);% update codebook with centroids 
+x = disteu(mf(:, ind == c), cent(:, c)); % find distance between mfcc and updated centroids
+for q = 1:length(x)
+D = D + x(q); % update distortion
+end
+end
+if (((D_min - D)/D) < eps) % threshold 
+break;
+else
+D_min = D;
+end
+end
+end
 end
