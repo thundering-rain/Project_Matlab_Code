@@ -132,14 +132,14 @@ end
 function cent = cbook(mf,cnum)
 
 eps   = .01;
-cent   = mean(mf, 2);%column vector containing the mean of each row
+cent   = mean(mf, 2);% column vector containing the mean of each row
 D_min = 10000;
 
 for l = 1:log2(cnum) % total loops will yield log desired codewords
 cent = [cent*(1+eps), cent*(1-eps)];
 while (1 == 1)
 nei = disteu(mf, cent); % find dist between centroids and training vectors
-[m,ind] = min(nei, [], 2);%column vector containing the minimum values of distance between codewords and training vectors
+[m,ind] = min(nei, [], 2);% column vector containing the minimum values of distance between codewords and training vectors
 D = 0; % initialize distortion
 for c = 1:2^l
 cent(:, c) = mean(mf(:, ind == c), 2);% update codebook with centroids 
