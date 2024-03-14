@@ -1,16 +1,45 @@
 This program, which is designed with the intention of functioning as a vq speaker recognition program is intended to be used in MATLAB
-In order to properly use this program please follow these instructions:
+In order to properly use this program please follow these steps:
 
-1) Download all Twelve and Zero training and test wav files included in this respository
+1) download the files in all the folders included in this repository
 
 2) upload said wav files to your file directory in MATLAB by dragging and dropping
 
 3) upload the Matlab_Code program to an appropriately named file in MATLAB
 
-4) If you wish to test the accuracy of vq voice recognition for the twelve files, navigate to
-line 2, which will have the code "file = sprintf('Zero_train%d.wav', p);", and replace the text "Zero" with "Twelve"
+4) to perform test 7, navigate to line 3 of the code, which has the text: "for p = 1:36" and change "36" to "8"
 
-5) next navigate to line 12, which will have the code: "file1 = sprintf('Zero_test%d.wav', ii );" and again replace the text: "Zero"
-with "Twelve", now run the program. The resuslts will be displayed in the command window.
+5) next, navigate to line 4 of the code, which has the text: "file = sprintf('z%d.wav', p);" and change "z" to "s"
 
-6) if you wish to test the accuracy of vq voice recognition for the Zero files simply run the program
+6) finally, navigate to line 10 of the code, which has the text: "file1 = sprintf('tw%d.wav', ii );" and change "tw" to "test"
+
+8) the results will be displayed in the command window, and will show which test corresponds to which training sample
+
+9) to perform test 8, repeat steps 4 through 6
+
+10) next, navigate to line 11, which has the text: "MF1 = mfcc(file1);" and change"mfcc" to "mfccf"
+
+11) the results dispayed in the command window will show how accurately the sytem predicts speakers 1 through 8
+of the given training data, by testing their test audio, after being filtered using a notch filter
+
+12) to perform test 9, repeat steps 4 through 6, but instead of changing "36" to "8", change it to "18". This is done since s 10-18 are
+actually the 10 randomly chosen speakers from class
+
+13) the results will be displayed in the command window
+
+14) to perform test 10, question 1, repeat steps 4 through 6, but instead of changing "36" to "8" change it to "18". Next, instead of changing "z" to "s",
+change it to "Twelve_train", or "Zero_train" depending on which word you would like to use. Finally, instead of changing "tw" to "test", change it to
+"Twelve_test" or "Zero_test" depending on which word you would like to use.
+
+15) to perform test 10, Question 2, the necessary conditions are already input in the Matlab_Code, so there is no need to change anything.
+
+16) understanding the results:  z1 to z18 correspond to the twelve training data for speakers 1 through 18, while z19 to z36 correspond to 
+zero training data for speakers 1-18. The testing pool is composed of files titled: tw1 to tw36. tw1 to tw18 correspond to the twelve testing data for speakers 1 through 18, 
+while tw19 to tw36 corresponds to zero testing data for speakers 1 through 18.
+
+17) understanding the results: using this test, so long as the test number and train number match, both the speaker and word are correctly identified.
+Additionally, since the tw and z folders have the same speaker twice, there is a chance the word can be misidentified but the speaker is correctly identified.
+If this occurs, the test number will either be: train number + 18, or: train number - 18. If the test number and train number do not match, and the test number is not:
+train number + 18, or: train number - 18, then both the speaker and word are misidentified.
+
+
