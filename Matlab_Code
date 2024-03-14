@@ -1,25 +1,23 @@
+MF = cell(1);
 book = cell(1);
-for p = 1:18                     % generate codebooks for speakers
-    file = sprintf('Zero_train%d.wav', p);           
-    disp(file);   
-    
- MF = mfcc(file); % generate MFCCs for speakers
-
-book{p} = cbook(MF,32);
+for p = 1:36                     % generate codebooks for speakers
+file = sprintf('z%d.wav', p);                 
+MF{p} = mfcc(file); % generate MFCCs for speakers
+book{p} = cbook(MF{p},32);
 end
 
-for ii =1:18                    % testing the codebooks
-file1 = sprintf('Zero_test%d.wav', ii );
+for ii =1:length(book)                    % testing the codebooks
+file1 = sprintf('tw%d.wav', ii );
 MF1 = mfcc(file1);
    
 sp = 0; % variable for speaker
-dist = zeros(1,18); % Average Distortion Vector
+dist = zeros(1,length(book)); % Average Distortion Vector
 for r = 1:length(book)      
 d = disteu(MF1, book{r}); % compute distortion of wav file mfccs with each speakers codewords 
 dist(r) = sum(min(d,[],2)) / size(d,1); % find av. distortion 
 end      
 m1 = min(dist); % minimum average distortion of all speakers
-for iii = 1:18
+for iii = 1:length(book)
 if dist(iii) == m1
 sp = iii;
 break;
@@ -31,11 +29,25 @@ msg = sprintf('Test %d corresponds to train %d', ii, sp);
 disp(msg);
 end
 
-
-%scatter(mfcc1(8,:),mfcc1(12,:),'b','o');
+%to test accoustic space
+%a1 = MF{2}; % create matrix for speaker 2 mfcc
+%b1 = MF{4}; % create matrix for speaker 4 mfcc
+%c1 = book{2}; % create matrix for speaker 2 codebook
+%d1 = book{4}; % create matrix for speaker 4 codebook
+%scatter(a1(8,:),a1(12,:),'b','o','DisplayName','speaker 2');
 %hold on
-%scatter(mfcc2(8,:),mfcc2(12,:),'r','x');
-%hold on 
+%scatter(b1(8,:),b1(12,:),'r','x','DisplayName','speaker 4');
+%hold on
+%scatter(c1(8,:),c1(12,:),'filled','DisplayName','centroid 2');
+%hold on
+%scatter(d1(8,:),d1(12,:),'k*','DisplayName','centroid 4');
+%title('Accoustic space of speaker 2 and speaker 4')
+%xlabel('mfcc-8');
+%ylabel('mfcc-12');
+%lgd = legend;
+%lgd.NumColumns = 1;
+
+ 
 
 
 
@@ -107,7 +119,7 @@ copies = zeros(1,P);
 for n = 1:N
 d(n,:) = sum((x(:, n+copies) - y) .^2, 1);
 end
-else
+else 
 copies = zeros(1,N);
 for p = 1:P
 d(:,p) = sum((x - y(:, p+copies)) .^2, 1)';
@@ -148,8 +160,17 @@ end
 % MFCC function
 function MF = mfcc(file)
 [y,Fs] = audioread(file); % read .wav audio file
+while(1==1)
+if (Fs == 48000) % resample to improve accuracy of higher frequency samples
 y = resample(y,2,17);
 Fs = Fs * 2 / 17;
+break;
+else
+y = resample(y,56,125);
+Fs = Fs * 56 / 125;
+break;
+end
+end
 t = 0:1/Fs:length(y)/Fs; % time length and increments
 t = t(1:end-1); % matching time and sample vector lengths
 N = .032; % multiplier for Fs
@@ -157,48 +178,183 @@ M = .0125; %
 N = N * Fs; % Convert from seconds to samples
 M = M * Fs; % Convert from seconds to samples
 signal_length_L = length(y);
-N = round(N); % N = 320 samples, frane_length
-disp(N);
-M = round(M); % M = 125, frame_step
-disp(M); 
+N = round(N); % N =  frame_length
+M = round(M); % M =  frame_step
+
 
 [s,f,t] = stft(y,Fs,Window=hanning(N-1),OverlapLength=N-M,FFTLength=N); % break signal into # of frames with N length overlapping by N-M
-%sdb = mag2db(abs(s)); % find power of s
-%subplot(3,1,1);
-%imagesc(t,f/1000,sdb); % spectrogram of s, prior to mel frequency wrapping
+
+
+
+sdb = mag2db(abs(s)); % find power of s
+% spectrogram of s, prior to mel frequency wrapping
+%imagesc(t,f/1000,sdb); 
 %ax = gca;
 %set(gca,'YDir', 'normal');
 %view(2);
 %colorbar
-%ylim([0 6]);
+%title('spectrogram of s, prior to mel frequency wrapping');
+%xlabel('time (s)');
+%ylabel('frequency (kHz)');
+%ylim([0 3]);
 
 
-m = melfb(50, N, Fs); % mel-spaced filterbank, compare with theoretical
+
+m = melfb(50, N, Fs); % mel-spaced filterbank
 N2 = 1 + floor(N/2); % 1/2 of the number of samples per frame
 z = m * abs(f(1:N2)).^2;
+
+while(1==1) % need to change N2 so indeces for mel_fbs are correct
+if (Fs < 5600)
+N2 = N2-1;
+break;
+else
+N2 = N2;
+break;
+end
+end
+
 
 mel_fbs = zeros(50,size(s,2)); % initialize matrix for mel-frequency wrapped fft values
 for i = (1:size(s,2))
 z = m * abs(s(N2:N,i)).^2; 
 mel_fbs(1:50,i) = z(1:50,1);
 end
-sdb = mag2db(abs(mel_fbs)); % power of mel-frequency wrapped fft values (mel_spectrum)
-%subplot(3,1,2)
-%imagesc(t,[0:max(f)/20:max(f)-max(f)/20]/1000,sdb); % spectrogram after mel-frequency wrapping
+
+
+sdb = mag2db(abs(mel_fbs)); %find power of mel_frequency wrapped values
+% spectrogram of mel-frequency wrapped fft values (mel_spectrum)
+%imagesc(t,[0:max(f)/50:max(f)-max(f)/50]/1000,sdb); % spectrogram after mel-frequency wrapping
 %ax = gca;
 %set(gca,'YDir', 'normal');
 %view(2);
 %colorbar
+%title('spectrogram of s, after mel frequency wrapping');
+%xlabel('time (s)');
+%ylabel('frequency (kHz)');
+
 
 
 %subplot(3,1,3)
-%melSpectrogram(y,Fs,'NumBands',50); % matlab mel spectrogram for comparison, should match
-%one above
+%melSpectrogram(y,Fs,'NumBands',50); % matlab mel spectrogram for comparison
 
 
-MF = zeros(50,size(sdb,2)); % initialize matric for mfcc
+MF = zeros(50,size(sdb,2)); % initialize matrix for mfcc
 for j = (1:size(sdb,2))
 z = dct(sdb(1:size(sdb,1),j))/10; 
 MF(1:50,j) = z(1:50,1);
 end
+% spectrogram of power vs time vs mfcc to satisfy test 4
+%imagesc(t,[0:1:length(MF)/2],sdb); % spectrogram after mel-frequency wrapping
+%ax = gca;
+%set(gca,'YDir', 'normal');
+%view(2);
+%colorbar
+%title('zero train 1,');
+%xlabel('time (s)');
+%ylabel('mfc coefficients');
 end
+
+% MFCC function for notch filters
+function MF = mfccf(file)
+[y,Fs] = audioread(file); % read .wav audio file
+[b,a] = butter(10,[0.2 .8],'stop');
+yf = filtfilt(b,a,y);
+%fvtool(b,a);
+while(1==1)
+if (Fs == 48000) % resample to improve accuracy of higher frequency samples
+y = resample(y,2,17);
+Fs = Fs * 2 / 17;
+break;
+else
+break;
+end
+end
+t = 0:1/Fs:length(yf)/Fs; % time length and increments
+t = t(1:end-1); % matching time and sample vector lengths
+%plot(t,yf);
+%title('zero train 1 after notch filter');
+%xlabel('time (s)');
+%ylabel('amplitude');
+N = .032; % multiplier for Fs
+M = .0125; % 
+N = N * Fs; % Convert from seconds to samples
+M = M * Fs; % Convert from seconds to samples
+signal_length_L = length(y);
+N = round(N); % N = frame_length
+M = round(M); % M = frame_step
+
+
+[s,f,t] = stft(y,Fs,Window=hanning(N-1),OverlapLength=N-M,FFTLength=N); % break signal into # of frames with N length overlapping by N-M
+
+
+
+sdb = mag2db(abs(s)); % find power of s
+% spectrogram of s, prior to mel frequency wrapping
+%imagesc(t,f/1000,sdb); 
+%ax = gca;
+%set(gca,'YDir', 'normal');
+%view(2);
+%colorbar
+%title('spectrogram of s, prior to mel frequency wrapping');
+%xlabel('time (s)');
+%ylabel('frequency (kHz)');
+%ylim([0 3]);
+
+
+
+m = melfb(50, N, Fs); % mel-spaced filterbank
+N2 = 1 + floor(N/2); % 1/2 of the number of samples per frame
+z = m * abs(f(1:N2)).^2;
+
+while(1==1) % need to change N2 so indeces for mel_fbs are correct
+if (Fs > 6000)
+N2 = N2-1;
+break;
+else
+N2 = N2;
+break;
+end
+end
+
+
+mel_fbs = zeros(50,size(s,2)); % initialize matrix for mel-frequency wrapped fft values
+for i = (1:size(s,2))
+z = m * abs(s(N2:N,i)).^2; 
+mel_fbs(1:50,i) = z(1:50,1);
+end
+
+
+sdb = mag2db(abs(mel_fbs)); %find power of mel_frequency wrapped values
+% spectrogram of mel-frequency wrapped fft values (mel_spectrum)
+%imagesc(t,[0:max(f)/50:max(f)-max(f)/50]/1000,sdb); % spectrogram after mel-frequency wrapping
+%ax = gca;
+%set(gca,'YDir', 'normal');
+%view(2);
+%colorbar
+%title('spectrogram of s, after mel frequency wrapping');
+%xlabel('time (s)');
+%ylabel('frequency (kHz)');
+
+
+
+%subplot(3,1,3)
+%melSpectrogram(y,Fs,'NumBands',50); % matlab mel spectrogram for comparison
+
+
+MF = zeros(50,size(sdb,2)); % initialize matrix for mfcc
+for j = (1:size(sdb,2))
+z = dct(sdb(1:size(sdb,1),j))/10; 
+MF(1:50,j) = z(1:50,1);
+end
+% spectrogram of power vs time vs mfcc to satisfy test 4
+%imagesc(t,[0:1:length(MF)/2],sdb); % spectrogram after mel-frequency wrapping
+%ax = gca;
+%set(gca,'YDir', 'normal');
+%view(2);
+%colorbar
+%title('zero train 1,');
+%xlabel('time (s)');
+%ylabel('mfc coefficients');
+end
+
