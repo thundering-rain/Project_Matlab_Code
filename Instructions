@@ -20,7 +20,7 @@ In order to properly use this program please follow these steps:
 10) next, navigate to line 11, which has the text: "MF1 = mfcc(file1);" and change"mfcc" to "mfccf". Now run the program.
 
 11) the results dispayed in the command window will show how accurately the sytem predicts speakers 1 through 10
-of the given training data, by testing their test audio, after being filtered using a notch filter
+of the training data for speakers from class, by testing their test audio, after being filtered using a notch filter.
 
 12) to perform test 9, repeat steps 4 through 6, but instead of changing "36" to "8", change it to "18". This is done since s 10-18 are
 actually the 10 randomly chosen speakers from class
